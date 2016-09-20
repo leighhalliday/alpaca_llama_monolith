@@ -11,21 +11,23 @@ module Purchase
     end
 
     def ship!
-      success, response = Shipping.schedule(
+      success, response = schedule
+      if success
+        update!(status: 'shipped', shipment_id: response)
+      else
+        fail ShippingError, response
+      end
+    end
+
+    def schedule
+      Shipping.schedule(
         order_id: id,
         address: {
           postal_code: postal_code
         },
         weight_kg: weight_kg,
-        service_level: 'priority' # Would need to come from user selection
+        service_level: 'priority'
       )
-
-      if success
-        update!(status: 'shipped', shipment_id: response)
-      else
-        # This would need to be handled for real
-        fail ShippingError, response
-      end
     end
 
     def tracking_code
